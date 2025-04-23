@@ -6,6 +6,8 @@ import json
 import os
 import winreg
 import subprocess
+import datetime
+import time
 
 args = sys.argv[1:]
 print(args)
@@ -121,6 +123,7 @@ class MainWindow(QMainWindow):
                 print(f"更新注册表时出错: {e}")
 
         # 用args变量全部内容通过subprocess启动版本目录下的/wps.exe
+        global wps_dir
         wps_dir = self.getVersionList()
         executable_path = os.path.join(wps_dir, selected_version, "office6", "wps.exe")
         try:
@@ -148,6 +151,27 @@ if __name__ == "__main__":
         tray.showMessage("本启动器不支持启动小程序", "敬请谅解", QSystemTrayIcon.Information, 5000)
         tray.hide()
         sys.exit()
+    path = "./settings.json"
+    if os.path.exists(path):
+        with open(path, "r", encoding="utf-8") as file:
+            try:
+                data = json.load(file)
+                data = data.get("debug", False)
+                print(data)
+                print(f"Debug mode is {'enabled' if data else 'disabled'}")
+            except json.JSONDecodeError as e:
+                print(f"JSON decode error: {e}")
+                data = False
+    else:
+        data = False
+    if data:
+        print("Debug mode is enabled")
+        # 通过临时 MainWindow 实例来获取版本路径
+        tempMain = MainWindow()
+        current_wps_dir = tempMain.getVersionList()
+        with open("./debug.log", "w", encoding="utf-8") as file:
+            file.write(f"{datetime.datetime.now()} - Args: {str(args)}.\n")
+            file.write(f"{datetime.datetime.now()} - Versions: {str(current_wps_dir)}.\n")
     mainWindow = MainWindow()
     mainWindow.show()
     sys.exit(app.exec_())
